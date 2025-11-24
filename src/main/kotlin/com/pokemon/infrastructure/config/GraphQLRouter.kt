@@ -226,32 +226,10 @@ class GraphQLRouter(
                     </style>
                 </head>
                 <body>
-                    <div id="auth-notice" style="position: fixed; top: 0; left: 0; right: 0; background: #ff6b6b; color: white; padding: 10px; text-align: center; z-index: 10000; font-size: 14px; display: none;">
-                        <strong>⚠️ Authentication Notice:</strong> If you see a sign-in modal, click Cancel. Then use the login mutation (select from dropdown) and call setAuthToken(token) in the console.
-                        <button onclick="document.getElementById('auth-notice').style.display='none'" style="margin-left: 10px; background: white; color: #ff6b6b; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Dismiss</button>
-                    </div>
-⚠ Generate outputs
-  ❯ Generate to src/gql/
-    ✖ Failed to load schema from http://localhost:8082/graphql:
-      Unauthorized: Invalid or missing token
-
-      GraphQL Code Generator supports:
-
-      - ES Modules and CommonJS exports (export as default or named
-      export "schema")
-      - Introspection JSON File
-      - URL of GraphQL endpoint
-      - Multiple files with type definitions (glob expression)
-      - String in config file
-
-      Try to use one of above options and run codegen again.
-
-    ◼ Load GraphQL documents
-    ◼ Generate                    <div class="example-queries">
+                    <div class="example-queries">
                         <label for="query-select">📚 Example Queries:</label>
                         <select id="query-select">
                             <option value="">Select an example query...</option>
-                            <option value="login">🔐 Login Mutation</option>
                             <option value="pokemonById">🎮 Get Pokemon by ID (Full)</option>
                             <option value="pokemonByIdMinimal">🎮 Get Pokemon by ID (Minimal)</option>
                             <option value="pokemonsFirstPage">📋 Get Pokemons - First Page (15)</option>
@@ -264,36 +242,32 @@ class GraphQLRouter(
                     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
                     <script crossorigin src="https://unpkg.com/graphiql@3/graphiql.min.js"></script>
                     <script>
-                        // Define example queries globally first
+                        // Define example queries globally with header instructions
                         window.exampleQueries = {
-                            login: 'mutation { login(username: "admin", password: "admin") { success token message } }',
-                            pokemonById: 'query { pokemon(id: 1) { id name number imageUrl abilities { name isHidden } moves { name levelLearnedAt } forms { name url } } }',
-                            pokemonByIdMinimal: 'query { pokemon(id: 1) { id name number } }',
-                            pokemonsFirstPage: 'query { pokemons(first: 15) { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }',
-                            pokemonsSortedByName: 'query { pokemons(first: 10, sortBy: "name") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }',
-                            pokemonsSortedByNumber: 'query { pokemons(first: 20, sortBy: "number") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }'
+                            pokemonById: '# Headers Example:\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery { pokemon(id: 1) { id name number imageUrl abilities { name isHidden } moves { name levelLearnedAt } forms { name url } } }',
+                            pokemonByIdMinimal: '# Headers Example:\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery { pokemon(id: 1) { id name number } }',
+                            pokemonsFirstPage: '# Headers Example:\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery { pokemons(first: 15) { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }',
+                            pokemonsSortedByName: '# Headers Example:\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery { pokemons(first: 10, sortBy: "name") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }',
+                            pokemonsSortedByNumber: '# Headers Example:\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery { pokemons(first: 20, sortBy: "number") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }'
                         };
                         
-                        // Define loadExampleQuery function globally (will be enhanced after GraphiQL loads)
+                        // Function to load example query into GraphiQL
                         window.loadExampleQuery = function(queryName) {
                             if (!queryName || !window.exampleQueries || !window.exampleQueries[queryName]) {
                                 return;
                             }
                             const query = window.exampleQueries[queryName];
                             
-                            // Try to use GraphiQL instance if available
-                            if (window.graphiqlInstance && window.graphiqlInstance.setQuery) {
-                                window.graphiqlInstance.setQuery(query);
-                                return;
-                            }
-                            
-                            // Fallback: Wait for GraphiQL to be ready and update via DOM
-                            function trySetQuery() {
+                            // Use the updateQuery function if available
+                            if (window.updateGraphiQLQuery) {
+                                window.updateGraphiQLQuery(query);
+                            } else {
+                                // Fallback: Try to access the editor directly
+                                setTimeout(() => {
                                 const cmEditor = document.querySelector('.graphiql-query-editor .cm-editor');
-                                if (cmEditor) {
-                                    // CodeMirror 6
-                                    const view = cmEditor.__cm || cmEditor.querySelector('.cm-scroller')?.__cm;
-                                    if (view && view.dispatch) {
+                                    if (cmEditor && cmEditor.__cm) {
+                                        const view = cmEditor.__cm;
+                                        if (view.dispatch) {
                                         view.dispatch({
                                             changes: {
                                                 from: 0,
@@ -301,19 +275,13 @@ class GraphQLRouter(
                                                 insert: query
                                             }
                                         });
-                                        return true;
+                                        }
                                     }
-                                }
-                                return false;
-                            }
-                            
-                            // Try immediately, then retry
-                            if (!trySetQuery()) {
-                                setTimeout(trySetQuery, 300);
+                                }, 100);
                             }
                         };
                         
-                        // Attach event listener to dropdown (prevent default and page reload)
+                        // Attach event listener to dropdown
                         document.addEventListener('DOMContentLoaded', function() {
                             const select = document.getElementById('query-select');
                             if (select) {
@@ -323,7 +291,7 @@ class GraphQLRouter(
                                     if (queryName) {
                                         window.loadExampleQuery(queryName);
                                     }
-                                    // Reset dropdown after a short delay
+                                    // Reset dropdown after selection
                                     setTimeout(() => {
                                         this.value = '';
                                     }, 100);
@@ -351,16 +319,6 @@ class GraphQLRouter(
                             }
                         }
                         
-                        // Show auth notice if no token is stored
-                        if (!localStorage.getItem('authToken')) {
-                            setTimeout(() => {
-                                const notice = document.getElementById('auth-notice');
-                                if (notice) {
-                                    notice.style.display = 'block';
-                                }
-                            }, 1000);
-                        }
-                        
                         // Start waiting when DOM is ready
                         if (document.readyState === 'loading') {
                             document.addEventListener('DOMContentLoaded', waitForGraphiQL);
@@ -376,46 +334,20 @@ class GraphQLRouter(
                             }
                             
                             // Check if GraphiQL is available
-                            if (!GraphiQL || !GraphiQL.createFetcher) {
-                                throw new Error('GraphiQL library not loaded correctly. GraphiQL.createFetcher is not available.');
+                            if (!GraphiQL) {
+                                throw new Error('GraphiQL library not loaded correctly.');
                             }
                             
-                            // Create a custom fetcher that handles authentication and introspection
-                            const customFetcher = async (graphQLParams, opts) => {
-                                // Check if this is an introspection query
-                                const query = graphQLParams.query || '';
-                                const isIntrospection = query.includes('__schema') || 
-                                                       query.includes('__type') || 
-                                                       query.includes('IntrospectionQuery');
-                                
-                                // Only add auth token for non-introspection queries
-                                const token = localStorage.getItem('authToken');
-                                const headers = {};
-                                if (!isIntrospection && token) {
-                                    headers['Authorization'] = 'Bearer ' + token;
-                                }
-                                
+                            // Create a simple fetcher function (no authentication needed)
+                            const fetcher = async (graphQLParams) => {
                                 try {
                                     const response = await fetch('/graphql', {
                                         method: 'POST',
                                         headers: {
-                                            'Content-Type': 'application/json',
-                                            ...headers
+                                            'Content-Type': 'application/json'
                                         },
-                                        credentials: 'omit', // Prevent browser auth modal
                                         body: JSON.stringify(graphQLParams)
                                     });
-                                    
-                                    // Handle 401 responses without triggering browser auth modal
-                                    if (response.status === 401) {
-                                        const errorData = await response.json().catch(() => ({}));
-                                        return {
-                                            data: null,
-                                            errors: errorData.errors || [{
-                                                message: 'Authentication required. Use the login mutation to get a token, then call setAuthToken(token) in the console.'
-                                            }]
-                                        };
-                                    }
                                     
                                     if (!response.ok) {
                                         throw new Error('HTTP error! status: ' + response.status);
@@ -423,7 +355,6 @@ class GraphQLRouter(
                                     
                                     return await response.json();
                                 } catch (error) {
-                                    // Return GraphQL error format instead of throwing
                                     return {
                                         data: null,
                                         errors: [{
@@ -433,8 +364,7 @@ class GraphQLRouter(
                                 }
                             };
                             
-                            // GraphiQL v3 - the component is available as GraphiQL.GraphiQL or just GraphiQL
-                            // Try different ways to access the component
+                            // Find GraphiQL component
                             let GraphiQLComponent = null;
                             if (GraphiQL.GraphiQL) {
                                 GraphiQLComponent = GraphiQL.GraphiQL;
@@ -446,54 +376,101 @@ class GraphQLRouter(
                                 throw new Error('Could not find GraphiQL component. Available keys: ' + Object.keys(GraphiQL).join(', '));
                             }
                             
-                            // Use a simple default query
-                            const defaultQuery = '# Welcome to Pokemon GraphQL API\\n# Select an example query from the dropdown above, or write your own.\\n# Schema introspection works automatically - no token needed!\\n\\nquery {\\n  # Start typing to see available queries\\n}';
+                            // Default query with header instructions
+                            const defaultQuery = '# Welcome to Pokemon GraphQL API\\n# Select an example query from the dropdown above, or write your own.\\n#\\n# Headers Example (click Headers tab above):\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery {\\n  # Start typing to see available queries\\n}';
                             
-                            // Store instance reference for query updates
-                            let graphiqlInstanceRef = null;
+                            // Default headers with token example
+                            const defaultHeaders = JSON.stringify({
+                                'Authorization': 'Bearer paste_your_token_here'
+                            }, null, 2);
+                            
+                            // Create a wrapper component with state to manage query and headers
+                            function GraphiQLWrapper() {
+                                const [query, setQuery] = React.useState(defaultQuery);
+                                const [headers, setHeaders] = React.useState(defaultHeaders);
+                                
+                                // Expose update function globally when component mounts
+                                React.useEffect(() => {
+                                    window.updateGraphiQLQuery = function(newQuery) {
+                                        setQuery(newQuery);
+                                    };
+                                    return function() {
+                                        delete window.updateGraphiQLQuery;
+                                    };
+                                }, []);
+                                
+                                // Create fetcher that includes headers from the editor
+                                const fetcherWithHeaders = async (graphQLParams, opts) => {
+                                    let requestHeaders = {
+                                        'Content-Type': 'application/json'
+                                    };
+                                    
+                                    // Get headers from GraphiQL's header editor if available
+                                    let headersToUse = headers;
+                                    if (opts && opts.headers) {
+                                        headersToUse = JSON.stringify(opts.headers, null, 2);
+                                    }
+                                    
+                                    // Parse headers from the editor
+                                    try {
+                                        const parsedHeaders = JSON.parse(headersToUse);
+                                        Object.assign(requestHeaders, parsedHeaders);
+                                        // Remove placeholder token if it hasn't been replaced
+                                        if (requestHeaders.Authorization && requestHeaders.Authorization.includes('paste_your_token_here')) {
+                                            delete requestHeaders.Authorization;
+                                        }
+                                    } catch (e) {
+                                        // If headers aren't valid JSON, just use default
+                                    }
+                                    
+                                    try {
+                                        const response = await fetch('/graphql', {
+                                            method: 'POST',
+                                            headers: requestHeaders,
+                                            body: JSON.stringify(graphQLParams)
+                                        });
+                                        
+                                        if (!response.ok) {
+                                            throw new Error('HTTP error! status: ' + response.status);
+                                        }
+                                        
+                                        return await response.json();
+                                    } catch (error) {
+                                        return {
+                                            data: null,
+                                            errors: [{
+                                                message: error.message || 'An error occurred while executing the query'
+                                            }]
+                                        };
+                                    }
+                                };
+                                
+                                // Parse default headers object for GraphiQL
+                                let defaultHeadersObj = {};
+                                try {
+                                    defaultHeadersObj = JSON.parse(headers);
+                                } catch (e) {
+                                    // Use empty object if parsing fails
+                                }
+                                
+                                return React.createElement(GraphiQLComponent, {
+                                    fetcher: fetcherWithHeaders,
+                                    query: query,
+                                    onEditQuery: setQuery,
+                                    headers: defaultHeadersObj,
+                                    onEditHeaders: function(newHeaders) {
+                                        setHeaders(JSON.stringify(newHeaders, null, 2));
+                                    },
+                                    shouldPersistHeaders: false
+                                });
+                            }
                             
                             const root = ReactDOM.createRoot(graphiqlElement);
-                            root.render(React.createElement(GraphiQLComponent, { 
-                                fetcher: customFetcher,
-                                defaultQuery: defaultQuery,
-                                ref: function(ref) {
-                                    graphiqlInstanceRef = ref;
-                                    window.graphiqlInstance = ref;
-                                }
-                            }));
+                            root.render(React.createElement(GraphiQLWrapper));
                             
-                            // Store for query loading
+                            // Store references
                             window.graphiqlRoot = root;
                             window.graphiqlElement = graphiqlElement;
-                        
-                            // Helper function to set token (can be called from browser console)
-                            window.setAuthToken = function(token) {
-                                if (!token || token.trim() === '') {
-                                    console.error('Token cannot be empty');
-                                    return;
-                                }
-                                localStorage.setItem('authToken', token);
-                                console.log('Token stored successfully. Refreshing page...');
-                                location.reload();
-                            };
-                            
-                            // Auto-extract token from login mutation responses
-                            const originalCustomFetcher = customFetcher;
-                            window.graphiqlFetcher = async (graphQLParams, opts) => {
-                                const result = await originalCustomFetcher(graphQLParams, opts);
-                                
-                                // If this is a login mutation and it succeeded, auto-store the token
-                                if (graphQLParams.query && graphQLParams.query.includes('login') && result.data && result.data.login) {
-                                    const loginResult = result.data.login;
-                                    if (loginResult.success && loginResult.token) {
-                                        console.log('Login successful! Auto-storing token...');
-                                        localStorage.setItem('authToken', loginResult.token);
-                                        console.log('Token stored. You can now use authenticated queries.');
-                                    }
-                                }
-                                
-                                return result;
-                            };
                         }
                     </script>
                 </body>
