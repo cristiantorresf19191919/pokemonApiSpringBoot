@@ -46,6 +46,49 @@ class JwtAuthenticationFilter(private val jwtTokenService: JwtTokenService) : We
                 if (isIntrospection) {
                     // Allow introspection queries via GET without authentication
                     return chain.filter(exchange)
+                } else {
+                    // For non-introspection GET requests, check authentication
+                    val token = extractToken(exchange)
+
+                    if (token == null || !jwtTokenService.validateToken(token)) {
+                        exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+                        exchange.response.headers.add("Content-Type", "application/json")
+                        val errorResponse =
+                                """
+                                {
+                                    "errors": [{
+                                        "message": "Unauthorized: Invalid or missing token",
+                                        "extensions": {
+                                            "code": "UNAUTHENTICATED",
+                                            "httpStatus": 401
+                                        }
+                                    }]
+                                }
+                            """.trimIndent()
+                        val buffer =
+                                exchange.response
+                                        .bufferFactory()
+                                        .wrap(errorResponse.toByteArray())
+                        return exchange.response.writeWith(Mono.just(buffer)).then()
+                    } else {
+                        val username = jwtTokenService.getUsernameFromToken(token)
+                        if (username != null) {
+                            val authentication =
+                                    UsernamePasswordAuthenticationToken(
+                                            username,
+                                            null,
+                                            listOf(SimpleGrantedAuthority("ROLE_USER"))
+                                    )
+
+                            return chain.filter(exchange)
+                                    .contextWrite(
+                                            ReactiveSecurityContextHolder
+                                                    .withAuthentication(authentication)
+                                    )
+                        } else {
+                            return chain.filter(exchange)
+                        }
+                    }
                 }
             }
 

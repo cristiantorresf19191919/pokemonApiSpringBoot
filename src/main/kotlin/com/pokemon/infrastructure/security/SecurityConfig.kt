@@ -20,10 +20,8 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeExchange { exchanges ->
                 exchanges
-                    .pathMatchers("/api/login", "/swagger-ui/**", "/api-docs/**", "/graphql-playground")
+                    .pathMatchers("/api/login", "/swagger-ui/**", "/api-docs/**", "/graphql-playground", "/graphql")
                     .permitAll()
-                    .pathMatchers("/graphql")
-                    .authenticated()
                     .anyExchange()
                     .permitAll()
             }
