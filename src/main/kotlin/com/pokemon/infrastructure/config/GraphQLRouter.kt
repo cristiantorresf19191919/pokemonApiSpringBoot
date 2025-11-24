@@ -12,6 +12,8 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.router
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 
 @Configuration
 class GraphQLRouter(
@@ -51,19 +53,64 @@ class GraphQLRouter(
                                     .operationName(graphQLRequest.operationName)
                                     .build()
 
-                    val executionResult = graphQL.execute(executionInput)
+                    // Wrap blocking GraphQL.execute() call in Mono.fromCallable to avoid blocking
+                    // the event loop
+                    Mono.fromCallable { graphQL.execute(executionInput) }
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .map { executionResult ->
+                                // Convert errors to serializable format (avoid complex exception
+                                // objects)
+                                val serializableErrors =
+                                        executionResult.errors.map { error ->
+                                            val errorMap =
+                                                    mutableMapOf<String, Any?>(
+                                                            "message" to error.message
+                                                    )
 
-                    val response =
-                            mapOf(
-                                    "data" to executionResult.getData(),
-                                    "errors" to
-                                            (executionResult.errors.takeIf { it.isNotEmpty() }
-                                                    ?: emptyList())
-                            )
+                                            // Build extensions map
+                                            val extensions = mutableMapOf<String, Any?>()
 
-                    ServerResponse.ok()
-                            .header("Content-Type", "application/json")
-                            .bodyValue(response)
+                                            // Add error type if available
+                                            if (error.errorType != null) {
+                                                extensions["code"] = error.errorType.toString()
+                                            }
+
+                                            // Add existing extensions if they exist and are
+                                            // serializable
+                                            if (error.extensions != null &&
+                                                            error.extensions.isNotEmpty()
+                                            ) {
+                                                error.extensions.forEach { (key, value) ->
+                                                    // Only include simple serializable types
+                                                    if (value is String ||
+                                                                    value is Number ||
+                                                                    value is Boolean ||
+                                                                    value == null
+                                                    ) {
+                                                        extensions[key.toString()] = value
+                                                    }
+                                                }
+                                            }
+
+                                            if (extensions.isNotEmpty()) {
+                                                errorMap["extensions"] = extensions
+                                            }
+
+                                            errorMap
+                                        }
+
+                                mapOf(
+                                        "data" to executionResult.getData(),
+                                        "errors" to
+                                                (serializableErrors.takeIf { it.isNotEmpty() }
+                                                        ?: emptyList())
+                                )
+                            }
+                            .flatMap { response ->
+                                ServerResponse.ok()
+                                        .header("Content-Type", "application/json")
+                                        .bodyValue(response)
+                            }
                 }
             }
             GET("/graphql-playground") {

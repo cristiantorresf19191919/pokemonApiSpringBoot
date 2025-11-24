@@ -294,3 +294,6 @@ The project includes comprehensive unit tests for:
 - MockK for testing
 - Reactor Test for reactive testing
 
+## Current Azure Deployment
+- docker buildx create --use
+- docker buildx build --platform linux/amd64 -t cristiantorres19/pokemon-backend:latest --push .

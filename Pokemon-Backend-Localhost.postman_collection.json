@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "pokemon-backend-localhost",
 		"name": "Pokemon Backend - Localhost",
-		"description": "Complete API collection for Pokemon Backend running on localhost:8080",
+		"description": "Complete API collection for Pokemon Backend running on localhost:8082",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -40,12 +40,12 @@
 							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin\"\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/login",
+							"raw": "http://localhost:8082/api/login",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "8080",
+							"port": "8082",
 							"path": [
 								"api",
 								"login"
@@ -94,12 +94,12 @@
 									"raw": "{\n    \"query\": \"mutation { login(username: \\\"admin\\\", password: \\\"admin\\\") { success token message } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -123,12 +123,12 @@
 									"raw": "{\n    \"query\": \"mutation { login(username: \\\"wrong\\\", password: \\\"wrong\\\") { success token message } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -162,12 +162,12 @@
 									"raw": "{\n    \"query\": \"query { pokemon(id: 1) { id name number imageUrl abilities { name isHidden } moves { name levelLearnedAt } forms { name url } } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -196,12 +196,12 @@
 									"raw": "{\n    \"query\": \"query { pokemon(id: 25) { id name number imageUrl abilities { name isHidden } moves { name levelLearnedAt } forms { name url } } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -230,12 +230,12 @@
 									"raw": "{\n    \"query\": \"query { pokemon(id: 6) { id name number imageUrl abilities { name isHidden } moves { name levelLearnedAt } forms { name url } } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -264,12 +264,12 @@
 									"raw": "{\n    \"query\": \"query { pokemon(id: 1) { id name number } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -303,12 +303,12 @@
 									"raw": "{\n    \"query\": \"query { pokemons(first: 10, sortBy: \\\"name\\\") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -337,12 +337,12 @@
 									"raw": "{\n    \"query\": \"query { pokemons(first: 20, sortBy: \\\"number\\\") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -371,12 +371,12 @@
 									"raw": "{\n    \"query\": \"query { pokemons(first: 10, after: \\\"Y3Vyc29yOjEw\\\", sortBy: \\\"name\\\") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -405,12 +405,12 @@
 									"raw": "{\n    \"query\": \"query { pokemons(first: 20, after: \\\"Y3Vyc29yOjIw\\\", sortBy: \\\"number\\\") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -439,12 +439,12 @@
 									"raw": "{\n    \"query\": \"query { pokemons(first: 15) { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -473,12 +473,12 @@
 									"raw": "{\n    \"query\": \"query { pokemons(first: 50, sortBy: \\\"name\\\") { edges { node { id name number imageUrl } cursor } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } totalCount } }\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:8080/graphql",
+									"raw": "http://localhost:8082/graphql",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8082",
 									"path": [
 										"graphql"
 									]
@@ -495,7 +495,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:8080",
+			"value": "http://localhost:8082",
 			"type": "string"
 		},
 		{

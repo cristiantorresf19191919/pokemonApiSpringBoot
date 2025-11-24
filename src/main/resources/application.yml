@@ -1,9 +1,11 @@
 spring:
   application:
     name: pokemon-backend
+  banner:
+    location: classpath:banner.txt
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8082}
 
 pokeapi:
   base-url: ${POKEAPI_BASE_URL:https://pokeapi.co/api/v2}
@@ -16,7 +18,8 @@ logging:
 jwt:
   # Use environment variable JWT_SECRET for production (set in Azure)
   # For local development, create application-local.yml (see application-local.yml.example)
-  secret: ${JWT_SECRET:}
+  # Default value ensures the app can start even without JWT_SECRET set (for local dev)
+  secret: ${JWT_SECRET:PokemonBackendSecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLong}
   expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
 
 springdoc:
