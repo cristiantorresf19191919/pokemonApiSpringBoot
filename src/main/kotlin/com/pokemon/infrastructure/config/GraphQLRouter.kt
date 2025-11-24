@@ -262,42 +262,103 @@ class GraphQLRouter(
                             if (window.updateGraphiQLQuery) {
                                 window.updateGraphiQLQuery(query);
                             } else {
-                                // Fallback: Try to access the editor directly
-                                setTimeout(() => {
-                                const cmEditor = document.querySelector('.graphiql-query-editor .cm-editor');
-                                    if (cmEditor && cmEditor.__cm) {
-                                        const view = cmEditor.__cm;
-                                        if (view.dispatch) {
-                                        view.dispatch({
-                                            changes: {
-                                                from: 0,
-                                                to: view.state.doc.length,
-                                                insert: query
+                                // Wait for GraphiQL to be ready
+                                const tryUpdate = function() {
+                                    if (window.updateGraphiQLQuery) {
+                                        window.updateGraphiQLQuery(query);
+                                    } else {
+                                        // Fallback: Try to access the editor directly
+                                        const cmEditor = document.querySelector('.graphiql-query-editor .cm-editor');
+                                        if (cmEditor) {
+                                            // Try CodeMirror 6 approach
+                                            if (cmEditor.__cm) {
+                                                const view = cmEditor.__cm;
+                                                if (view.dispatch) {
+                                                    view.dispatch({
+                                                        changes: {
+                                                            from: 0,
+                                                            to: view.state.doc.length,
+                                                            insert: query
+                                                        }
+                                                    });
+                                                    return;
+                                                }
                                             }
-                                        });
+                                            // Try accessing the CodeMirror instance via the component
+                                            const cmView = cmEditor.cmView || cmEditor.querySelector('.cm-scroller');
+                                            if (cmView && cmView.view) {
+                                                cmView.view.dispatch({
+                                                    changes: {
+                                                        from: 0,
+                                                        to: cmView.view.state.doc.length,
+                                                        insert: query
+                                                    }
+                                                });
+                                                return;
+                                            }
                                         }
+                                        // Retry after a short delay if not successful
+                                        setTimeout(tryUpdate, 100);
                                     }
-                                }, 100);
+                                };
+                                tryUpdate();
                             }
                         };
                         
-                        // Attach event listener to dropdown
-                        document.addEventListener('DOMContentLoaded', function() {
+                        // Attach event listener to dropdown - ensure it's attached after DOM is ready
+                        function attachDropdownListener() {
                             const select = document.getElementById('query-select');
-                            if (select) {
+                            if (select && !select.dataset.listenerAttached) {
+                                // Mark as attached to prevent duplicate listeners
+                                select.dataset.listenerAttached = 'true';
+                                
+                                // Prevent any form submission if select is in a form
+                                const form = select.closest('form');
+                                if (form) {
+                                    form.addEventListener('submit', function(e) {
+                                        e.preventDefault();
+                                        return false;
+                                    }, true);
+                                }
+                                
+                                // Add change event listener - use capture phase to intercept early
                                 select.addEventListener('change', function(e) {
+                                    // Prevent all default behaviors
                                     e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    
                                     const queryName = this.value;
-                                    if (queryName) {
+                                    if (queryName && window.exampleQueries && window.exampleQueries[queryName]) {
+                                        // Load the query
                                         window.loadExampleQuery(queryName);
+                                        
+                                        // Reset dropdown after a delay
+                                        const self = this;
+                                        setTimeout(() => {
+                                            if (self.value === queryName) {
+                                                self.value = '';
+                                            }
+                                        }, 500);
                                     }
-                                    // Reset dropdown after selection
-                                    setTimeout(() => {
-                                        this.value = '';
-                                    }, 100);
-                                });
+                                    
+                                    return false;
+                                }, true); // Use capture phase to intercept early
+                            } else if (!select) {
+                                // Retry if select isn't ready yet
+                                setTimeout(attachDropdownListener, 100);
                             }
-                        });
+                        }
+                        
+                        // Attach listener when DOM is ready
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', function() {
+                                setTimeout(attachDropdownListener, 50);
+                            });
+                        } else {
+                            // DOM already loaded, attach after a short delay
+                            setTimeout(attachDropdownListener, 50);
+                        }
                     </script>
                     <script>
                         // Wait for all scripts to load before initializing
@@ -391,11 +452,25 @@ class GraphQLRouter(
                                 
                                 // Expose update function globally when component mounts
                                 React.useEffect(() => {
-                                    window.updateGraphiQLQuery = function(newQuery) {
-                                        setQuery(newQuery);
+                                    // Create a stable update function
+                                    const updateQuery = function(newQuery) {
+                                        if (newQuery && typeof newQuery === 'string') {
+                                            setQuery(newQuery);
+                                        }
                                     };
+                                    
+                                    window.updateGraphiQLQuery = updateQuery;
+                                    window.graphiqlReady = true;
+                                    
+                                    // Also trigger a small delay to ensure GraphiQL is fully initialized
+                                    setTimeout(() => {
+                                        window.graphiqlFullyReady = true;
+                                    }, 500);
+                                    
                                     return function() {
                                         delete window.updateGraphiQLQuery;
+                                        delete window.graphiqlReady;
+                                        delete window.graphiqlFullyReady;
                                     };
                                 }, []);
                                 
@@ -456,7 +531,9 @@ class GraphQLRouter(
                                 return React.createElement(GraphiQLComponent, {
                                     fetcher: fetcherWithHeaders,
                                     query: query,
-                                    onEditQuery: setQuery,
+                                    onEditQuery: function(newQuery) {
+                                        setQuery(newQuery);
+                                    },
                                     headers: defaultHeadersObj,
                                     onEditHeaders: function(newHeaders) {
                                         setHeaders(JSON.stringify(newHeaders, null, 2));
