@@ -13,7 +13,7 @@ COPY src/ src/
 
 # Make gradlew executable and build the application
 # --no-daemon: Ensures Gradle shuts down after building (saves memory/stuck processes)
-RUN chmod +x gradlew && ./gradlew build --no-daemon && rm build/libs/*-plain.jar
+RUN chmod +x gradlew && ./gradlew build --no-daemon
 
 # Stage 2: Runtime image
 FROM eclipse-temurin:21-jre-alpine
