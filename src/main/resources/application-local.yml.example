@@ -2,12 +2,6 @@
 # Copy this file to application-local.yml and fill in your local values
 # application-local.yml is gitignored and will not be committed to the repository
 
-spring:
-  data:
-    mongodb:
-      # Your local MongoDB connection string
-      uri: mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority&appName=Cluster0
-
 jwt:
   # Your local JWT secret key (must be at least 256 bits long)
   secret: YourLocalJWTSecretKeyForDevelopmentMustBeAtLeast256BitsLongForSecurity

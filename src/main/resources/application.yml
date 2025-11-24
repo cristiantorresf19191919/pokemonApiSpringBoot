@@ -1,9 +1,4 @@
 spring:
-  data:
-    mongodb:
-      # Use environment variable MONGODB_URI for production (set in Azure)
-      # For local development, create application-local.yml (see application-local.yml.example)
-      uri: ${MONGODB_URI:}
   application:
     name: pokemon-backend
 

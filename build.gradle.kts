@@ -37,7 +37,6 @@ configurations.all {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -45,8 +44,6 @@ dependencies {
     
     implementation("com.graphql-java:graphql-java:21.0")
     implementation("com.graphql-java-kickstart:graphql-java-tools:13.1.0")
-    
-    implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.11.1")
     
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0")
     

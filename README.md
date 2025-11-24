@@ -18,7 +18,6 @@ This project follows Clean Architecture principles with the following layers:
 - **Spring Boot 3.3.5** (Latest stable)
 - Spring WebFlux (Reactive)
 - GraphQL
-- MongoDB (Reactive)
 - PokeAPI integration
 - **Gradle 8.11.1** (Latest stable)
 
@@ -202,12 +201,8 @@ The application implements a cursor-based pagination system using Base64-encoded
    cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
    ```
 
-2. Edit `application-local.yml` and add your local MongoDB connection string and JWT secret:
+2. Edit `application-local.yml` and add your JWT secret:
    ```yaml
-   spring:
-     data:
-       mongodb:
-         uri: mongodb+srv://username:password@cluster.mongodb.net/database
    jwt:
      secret: YourLocalJWTSecretKeyForDevelopmentMustBeAtLeast256BitsLongForSecurity
    ```
@@ -219,7 +214,6 @@ The application implements a cursor-based pagination system using Base64-encoded
 The application uses environment variables for production configuration. Set the following environment variables in your Azure App Service:
 
 **Required Environment Variables:**
-- `MONGODB_URI` - Your MongoDB connection string (e.g., `mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority`)
 - `JWT_SECRET` - Your JWT secret key (must be at least 256 bits long for security)
 
 **Optional Environment Variables:**
@@ -239,7 +233,7 @@ The application uses environment variables for production configuration. Set the
 
 2. **Azure CLI:**
    ```bash
-   az webapp config appsettings set --resource-group <resource-group-name> --name <app-name> --settings MONGODB_URI="mongodb+srv://..." JWT_SECRET="your-secret-key"
+   az webapp config appsettings set --resource-group <resource-group-name> --name <app-name> --settings JWT_SECRET="your-secret-key"
    ```
 
 3. **Azure DevOps Pipeline:**
@@ -248,11 +242,6 @@ The application uses environment variables for production configuration. Set the
      inputs:
        appSettings: |
          [
-           {
-             "name": "MONGODB_URI",
-             "value": "$(MONGODB_URI)",
-             "slotSetting": false
-           },
            {
              "name": "JWT_SECRET",
              "value": "$(JWT_SECRET)",
@@ -302,7 +291,6 @@ The project includes comprehensive unit tests for:
 
 - Spring Boot WebFlux for reactive programming
 - GraphQL Java Tools for GraphQL support
-- MongoDB Reactive Driver
 - MockK for testing
 - Reactor Test for reactive testing
 
