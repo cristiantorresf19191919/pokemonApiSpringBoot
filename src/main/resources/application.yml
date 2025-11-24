@@ -1,0 +1,36 @@
+spring:
+  data:
+    mongodb:
+      # Use environment variable MONGODB_URI for production (set in Azure)
+      # For local development, create application-local.yml (see application-local.yml.example)
+      uri: ${MONGODB_URI:}
+  application:
+    name: pokemon-backend
+
+server:
+  port: ${SERVER_PORT:8080}
+
+pokeapi:
+  base-url: ${POKEAPI_BASE_URL:https://pokeapi.co/api/v2}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.pokemon: ${LOG_LEVEL_POKEMON:DEBUG}
+
+jwt:
+  # Use environment variable JWT_SECRET for production (set in Azure)
+  # For local development, create application-local.yml (see application-local.yml.example)
+  secret: ${JWT_SECRET:}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    displayRequestDuration: true

@@ -1,0 +1,58 @@
+type Query {
+    pokemon(id: Int!): Pokemon
+    pokemons(first: Int, after: String, sortBy: String): PokemonConnection!
+}
+
+type Mutation {
+    login(username: String!, password: String!): AuthPayload!
+}
+
+type Pokemon {
+    id: Int!
+    name: String!
+    number: Int!
+    imageUrl: String!
+    abilities: [Ability!]!
+    moves: [Move!]!
+    forms: [Form!]!
+}
+
+type Ability {
+    name: String!
+    isHidden: Boolean!
+}
+
+type Move {
+    name: String!
+    levelLearnedAt: Int
+}
+
+type Form {
+    name: String!
+    url: String!
+}
+
+type PokemonConnection {
+    edges: [PokemonEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type PokemonEdge {
+    node: Pokemon!
+    cursor: String!
+}
+
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type AuthPayload {
+    success: Boolean!
+    token: String
+    message: String
+}
+
