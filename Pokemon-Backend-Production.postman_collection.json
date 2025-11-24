@@ -514,6 +514,321 @@
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "Pokemon Autocomplete/Search",
+					"item": [
+						{
+							"name": "Search - Pikachu (query: 'pika')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"pika\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Fast in-memory autocomplete search for Pokemon names containing 'pika'. Returns up to 10 lightweight preview results (id, name, imageUrl). Perfect for autocomplete functionality. No authentication required."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Charizard Evolution Line (query: 'char')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"char\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search for Pokemon names containing 'char'. Should return charmander, charmeleon, charizard, and potentially charjabug, charcadet, etc. Returns up to 10 results."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Bulbasaur Evolution Line (query: 'saur')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"saur\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search for Pokemon names containing 'saur'. Should return bulbasaur, ivysaur, venusaur, and potentially other Pokemon with 'saur' in their name."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Mew Family (query: 'mew')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"mew\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search for Pokemon names containing 'mew'. Should return mew and mewtwo. Demonstrates case-insensitive partial matching."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Eevee Evolution Line (query: 'eevee')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"eevee\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search for Pokemon names containing 'eevee'. Should return eevee and potentially eeveelutions like vaporeon, jolteon, flareon, etc. (if they contain 'eevee' in their name)."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Single Character (query: 'p')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"p\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search with a single character 'p'. Will return up to 10 Pokemon whose names contain 'p' (case-insensitive). Demonstrates the 10-result limit for performance."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Exact Match (query: 'pikachu')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"pikachu\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search with exact Pokemon name 'pikachu'. Should return pikachu (ID: 25). Demonstrates exact name matching."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - No Results (query: 'xyz123')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"xyz123\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search with a query that matches no Pokemon names. Should return an empty array. Demonstrates graceful handling of no results."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Dragon Type (query: 'dragon')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"dragon\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search for Pokemon names containing 'dragon'. Should return dragonite, dragonair, dratini, and other dragon-type Pokemon with 'dragon' in their name. Returns up to 10 results."
+							},
+							"response": []
+						},
+						{
+							"name": "Search - Legendary Birds (query: 'zap')",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { searchPokemon(query: \\\"zap\\\") { id name imageUrl } }\"\n}"
+								},
+								"url": {
+									"raw": "https://pokebackend-e8epanf7cpaje5dy.centralus-01.azurewebsites.net/graphql",
+									"protocol": "https",
+									"host": [
+										"pokebackend-e8epanf7cpaje5dy",
+										"centralus-01",
+										"azurewebsites",
+										"net"
+									],
+									"path": [
+										"graphql"
+									]
+								},
+								"description": "Search for Pokemon names containing 'zap'. Should return zapdos and potentially other Pokemon with 'zap' in their name. Demonstrates partial matching for legendary Pokemon."
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		}

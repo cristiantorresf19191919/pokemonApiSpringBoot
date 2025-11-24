@@ -22,7 +22,13 @@ class PokemonService(
 
         fun getPokemons(first: Int?, after: String?, sortBy: String?): Mono<PageDTO<PokemonDTO>> {
                 val limit = first ?: 20
-                val offset = paginationService.decodeCursor(after) ?: 0
+                // When using 'after', we need to start from the next item after the cursor
+                val offset =
+                        if (after != null) {
+                                (paginationService.decodeCursor(after) ?: 0) + 1
+                        } else {
+                                0
+                        }
                 val sortField = sortBy ?: "number"
 
                 // 1. Get the slice from memory (Synchronous)
@@ -86,7 +92,8 @@ class PokemonService(
                         PokemonPreviewDTO(
                                 id = item.id,
                                 name = item.name,
-                                imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png"
+                                imageUrl =
+                                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png"
                         )
                 }
         }
