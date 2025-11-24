@@ -1,8 +1,333 @@
-# Pokemon Backend
+# 📝 Development Prompts
+
+This section documents the incremental prompts used to build this project step by step.
+
+---
+
+## Prompt 1: Project Setup and Dependencies
+
+```
+I need help setting up a Spring Boot project. I already created a Kotlin Spring Boot app with Gradle 8.11 and Java 21, but I need to configure it properly for a production-ready backend.
+
+I want to use:
+- Spring WebFlux for async/concurrent handling (reactive programming)
+- Spring Web for REST endpoints  
+- GraphQL (graphql-java-kickstart) for GraphQL API
+- Spring Security for JWT token authentication
+- Jackson Kotlin module for JSON
+- Reactor Kotlin extensions
+- SpringDoc OpenAPI for Swagger docs
+- JWT libraries (jjwt) for tokens
+- Bucket4j for rate limiting
+
+Can you help me set up the build.gradle.kts with all the right dependencies? Make sure versions are compatible with Spring Boot 3.3.x and Kotlin 2.0.21. Thanks!
+```
+
+---
+
+## Prompt 2: Clean Architecture Scaffolding
+```
+Now that I have the dependencies, I need help creating the project structure. I want to follow Clean Architecture and DDD principles.
+
+I'm thinking of organizing it like this:
+
+**Domain layer** (com.pokemon.domain):
+- model/ - business entities (Pokemon, Ability, Move, Form, etc.)
+- repository/ - just interfaces, no implementations
+- service/ - domain service interfaces (PaginationService, AuthenticationService, JwtTokenService)
+
+**Application layer** (com.pokemon.application):
+- dto/ - DTOs for data transfer
+- mapper/ - mappers between domain and DTOs
+- service/ - application services that orchestrate business logic
+
+**Infrastructure layer** (com.pokemon.infrastructure):
+- client/ - external API clients (PokeAPI using WebClient)
+- repository/ - repository implementations
+- service/ - infrastructure service implementations
+- mapper/ - mappers from API responses to domain
+- config/ - configuration classes
+- security/ - security config and filters
+
+**Presentation layer** (com.pokemon.presentation):
+- graphql/ - GraphQL resolvers
+- rest/ - REST controllers (just for auth)
+- dto/ - presentation DTOs
+
+Can you help me scaffold this structure and explain how dependency injection connects these layers? I want to make sure domain has no dependencies on other layers, and everything flows correctly.
+```
+
+---
+
+## Prompt 3: GraphQL Schema and Resolvers
+```
+Alright, I have my GraphQL schema ready. I need help implementing the resolvers and setting up the GraphQL endpoint.
+
+Here's my schema:
+
+```graphql
+type Query {
+  pokemon(id: Int!): Pokemon
+  pokemons(first: Int, after: String, sortBy: String): PokemonConnection!
+  searchPokemon(query: String!): [PokemonPreview!]!
+}
+
+type Mutation {
+  login(username: String!, password: String!): AuthPayload!
+}
+
+type Pokemon {
+  id: Int!
+  name: String!
+  number: Int!
+  imageUrl: String!
+  abilities: [Ability!]!
+  moves: [Move!]!
+  forms: [Form!]!
+}
+
+type PokemonConnection {
+  edges: [PokemonEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type PokemonPreview {
+  id: Int!
+  name: String!
+  number: Int!
+  imageUrl: String!
+}
+```
+
+I need:
+1. Create the schema.graphqls file in resources
+2. Implement PokemonQueryResolver with pokemon(), pokemons(), and searchPokemon() methods
+3. Implement AuthMutationResolver with login()
+4. Configure GraphQL router to handle POST at /graphql
+5. Make sure everything uses reactive programming (Mono/Flux) and returns CompletableFuture for GraphQL compatibility
+
+Can you help me set this up?
+```
+
+---
+
+## Prompt 4: Cursor-Based Pagination
+```
+I need to implement cursor-based pagination for the pokemons query. Here's what I'm thinking:
+
+1. **Cursor encoding/decoding**: Use Base64 to encode offsets into opaque cursors
+   - Implement PaginationService interface with encodeCursor() and decodeCursor() methods
+
+2. **Pagination logic**:
+   - Accept `first` param (items per page, default 20)
+   - Accept `after` param (cursor for pagination)
+   - Accept `sortBy` param ("name" or "number", default "number")
+   - Return PokemonConnection with edges, pageInfo, and totalCount
+
+3. **Implementation details**:
+   - Sort the entire Pokemon list in-memory (not just current page)
+   - Calculate offset from cursor: offset = decodeCursor(after) + 1
+   - Slice the sorted list based on offset and limit
+   - Generate cursors for each edge
+   - Calculate hasNextPage and hasPreviousPage
+
+4. **Domain models**:
+   - Create Page<Pokemon> domain model
+   - Create Edge<Pokemon> with node and cursor
+   - Create PageInfo with pagination metadata
+
+Can you help me implement this? I want it to work globally across all Pokemon, not just the current page.
+```
+
+---
+
+## Prompt 5: JWT Authentication and Security
+```
+I need to implement JWT authentication and security. Here's what I need:
+
+1. **JWT Token Service**:
+   - Implement JwtTokenService interface
+   - Methods: generateToken(), validateToken(), getUsernameFromToken()
+   - Use HS256 algorithm
+   - Configurable expiration (default 24 hours)
+   - Secret key from environment variable
+
+2. **Authentication Service**:
+   - Implement AuthenticationService interface
+   - authenticate() method - validate credentials (hardcoded admin/admin for now)
+   - generateToken() - generate JWT after auth
+
+3. **Security Configuration**:
+   - Configure Spring Security for WebFlux
+   - Create SecurityConfig that allows public access to /api/login, /swagger-ui, /api-docs, /graphql-playground
+   - Add JwtAuthenticationFilter as WebFilter to validate tokens
+   - Add RateLimitingFilter for rate limiting
+
+4. **REST and GraphQL Auth**:
+   - Create AuthController at /api/login (REST)
+   - Create AuthMutationResolver for login mutation (GraphQL)
+   - Both return AuthPayload with success, token, message
+
+Can you help me implement this with proper error handling?
+```
+
+---
+
+## Prompt 6: PokeAPI Integration and Caching
+```
+I need to integrate with PokeAPI and implement a smart caching strategy. Here's my plan:
+
+1. **PokeAPI Client**:
+   - Create PokeApiClient using Spring WebClient (reactive)
+   - Methods: getPokemonList(), getPokemonById(), getPokemonByUrl()
+   - Configure base URL via application properties
+   - Add retry logic (2 retries with exponential backoff for 5xx errors)
+
+2. **Caching Service**:
+   - Create PokemonCacheService with:
+     - In-memory index (lightweight list loaded on startup)
+     - Details cache (ConcurrentHashMap for full Pokemon details)
+   - On startup (@PostConstruct):
+     - Fetch all Pokemon list (limit=10000) to build index
+     - Pre-fetch first 100 Pokemon details in parallel using WebFlux
+   - Methods:
+     - getPage() - get paginated index items (synchronous, in-memory)
+     - getDetails() - get Pokemon details (check cache first, then API with fallback)
+     - search() - search Pokemon by name (synchronous, in-memory)
+
+3. **Pre-fetching Strategy**:
+   - After loading index, pre-fetch Pokemon details using Flux.flatMap for parallel processing
+   - Use fetchPokemonDetailsWithFallback() method that:
+     - Tries getPokemonById() first with retry logic
+     - Falls back to getPokemonByUrl() if ID fetch fails
+   - Pre-fetch runs asynchronously (non-blocking) so server starts quickly
+   - Errors during pre-fetch are logged but don't block startup
+
+4. **Fallback Logic**:
+   - If getPokemonById fails, check if Pokemon exists in index
+   - If found, use URL from index to fetch via getPokemonByUrl
+   - Cache successful fetches
+
+Can you help me implement this with proper error handling and reactive patterns?
+```
+
+---
+
+## Prompt 7: DTOs and Mappers
+```
+I need to create all the DTOs and mappers. Here's what I need:
+
+1. **Application DTOs** (com.pokemon.application.dto):
+   - PokemonDTO - full Pokemon with abilities, moves, forms
+   - PokemonPreviewDTO - lightweight preview (id, name, number, imageUrl)
+   - PageDTO<T> - generic pagination DTO
+   - EdgeDTO<T> - generic edge DTO
+   - PageInfoDTO - pagination metadata
+   - AbilityDTO, MoveDTO, FormDTO - nested DTOs
+
+2. **Presentation DTOs** (com.pokemon.presentation.dto):
+   - GraphQLRequest - GraphQL request wrapper
+   - AuthPayload - auth response
+
+3. **Mappers**:
+   - PokemonMapper (Application layer):
+     - toDTO(pokemon: Pokemon): PokemonDTO
+     - toDTO(page: Page<Pokemon>): PageDTO<PokemonDTO>
+   - PokemonDomainMapper (Infrastructure layer):
+     - PokeApiPokemonResponse.toDomain(): Pokemon
+
+4. **Mapping Strategy**:
+   - Use extension functions for clean mapping
+   - Handle null values properly
+   - Map nested objects correctly
+
+Can you help me create all of these with proper null safety?
+```
+
+---
+
+## Prompt 8: Service Layer Orchestration
+```
+I need to implement the service layer that orchestrates everything. Here's what I need:
+
+1. **PokemonService** (Application layer):
+   - getPokemonById(id: Int): Mono<PokemonDTO> - get single Pokemon, map to DTO
+   - getPokemons(first, after, sortBy): Mono<PageDTO<PokemonDTO>>:
+     - Get page slice from cache service (synchronous)
+     - Fetch details for items in parallel using Flux
+     - Handle errors gracefully (log and continue with other items)
+     - Map to DTO and construct pagination response
+   - searchPokemon(query: String): Flux<PokemonPreviewDTO>:
+     - Use in-memory search (no API calls)
+     - Map index items to preview DTOs
+     - Generate image URLs statically
+
+2. **Error Handling**:
+   - Use retry logic for transient errors (5xx server errors)
+   - Use onErrorResume to handle individual item failures in pagination
+   - Log errors but don't fail entire requests
+   - Return empty results gracefully when needed
+
+3. **Performance Optimization**:
+   - Use parallel processing with Flux.flatMap for fetching multiple Pokemon
+   - Cache results to avoid redundant API calls
+   - Use in-memory operations for search and pagination
+
+Can you help me implement this with reactive programming patterns?
+```
+
+---
+
+## Prompt 9: Fallback Mechanism
+```
+Quick question - I noticed that when I search for Pokemon I can get results, but when I try to fetch by ID it sometimes fails with a 500 error from PokeAPI. Can you help me add a fallback mechanism? 
+
+If getPokemonById fails, I want to:
+- Check if the Pokemon exists in the index
+- If found, use the URL from the index to fetch via getPokemonByUrl as a fallback
+- No need for retries on the fallback, just try once
+- Cache the result if successful
+
+This should help handle cases where the direct ID endpoint fails but the URL endpoint works.
+```
+
+---
+
+## Prompt 10: Adding Number Field to Search
+```
+One more thing - I want to make sure the searchPokemon query returns the number field. Currently it only returns id, name, and imageUrl. Can you help me add the number field to:
+1. PokemonPreviewDTO
+2. The GraphQL schema (PokemonPreview type)
+3. The searchPokemon service method
+
+The number should be the same as the id in this case (based on how the domain model maps it).
+```
+
+---
+
+# 🚀 Pokemon Backend
 
 A Kotlin Spring Boot backend application with WebFlux and GraphQL for managing Pokemon data from PokeAPI.
 
-## Architecture
+---
+
+## 📑 Table of Contents
+
+- [Architecture](#-architecture)
+- [Technology Stack](#-technology-stack)
+- [Features](#-features)
+- [API Endpoints](#-api-endpoints)
+- [Key Architectural Solutions](#-key-architectural-solutions)
+- [Configuration](#-configuration)
+- [Running the Application](#-running-the-application)
+- [Project Structure](#-project-structure)
+- [Testing](#-testing)
+- [Deployment](#-azure-deployment)
+
+---
+
+## 🏗️ Architecture
 
 This project follows Clean Architecture principles with the following layers:
 
@@ -11,7 +336,7 @@ This project follows Clean Architecture principles with the following layers:
 - **Infrastructure Layer**: External API clients, repositories, and implementations
 - **Presentation Layer**: GraphQL resolvers and REST controllers
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 - **Java 21** (LTS)
 - **Kotlin 2.0.21** (Latest stable)
@@ -21,17 +346,17 @@ This project follows Clean Architecture principles with the following layers:
 - PokeAPI integration
 - **Gradle 8.11.1** (Latest stable)
 
-## Features
+## ✨ Features
 
-- **Authentication**: JWT-based authentication (admin/admin) via REST
-- **Pokemon Operations**: All Pokemon operations via GraphQL
+- **🔐 Authentication**: JWT-based authentication (admin/admin) via REST
+- **🎮 Pokemon Operations**: All Pokemon operations via GraphQL
   - Get Pokemon by ID
   - Get paginated Pokemon list with cursor-based pagination
   - **Global sorting** by name or number (works across all Pokemon, not just current page)
-- **GraphQL API**: Full GraphQL support with schema for all Pokemon business logic
-- **REST API**: RESTful endpoint for authentication only
-- **Security**: JWT token protection for all GraphQL Pokemon queries
-- **Performance**: In-memory caching and optimized data fetching to prevent N+1 queries
+- **📊 GraphQL API**: Full GraphQL support with schema for all Pokemon business logic
+- **🌐 REST API**: RESTful endpoint for authentication only
+- **🛡️ Security**: JWT token protection for all GraphQL Pokemon queries
+- **⚡ Performance**: In-memory caching and optimized data fetching to prevent N+1 queries
 
 ## API Endpoints
 
@@ -184,7 +509,7 @@ curl -X POST http://localhost:8080/graphql \
 - Reduces external API calls significantly
 - Thread-safe with `ConcurrentHashMap`
 
-## Cursor-Based Pagination
+## 📄 Cursor-Based Pagination
 
 The application implements a cursor-based pagination system using Base64-encoded offsets. This provides:
 
@@ -192,9 +517,9 @@ The application implements a cursor-based pagination system using Base64-encoded
 - Stable pagination even when data changes
 - GraphQL-friendly pagination pattern
 
-## Configuration
+## ⚙️ Configuration
 
-### Local Development
+### 🏠 Local Development
 
 1. Copy the example local configuration file:
    ```bash
@@ -209,7 +534,7 @@ The application implements a cursor-based pagination system using Base64-encoded
 
 **Note:** `application-local.yml` is gitignored and will not be committed to the repository.
 
-### Production (Azure Deployment)
+### ☁️ Production (Azure Deployment)
 
 The application uses environment variables for production configuration. Set the following environment variables in your Azure App Service:
 
@@ -250,19 +575,19 @@ The application uses environment variables for production configuration. Set the
          ]
    ```
 
-## Running the Application
+## ▶️ Running the Application
 
 ```bash
 ./gradlew bootRun
 ```
 
-## Running Tests
+## 🧪 Running Tests
 
 ```bash
 ./gradlew test
 ```
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
@@ -279,7 +604,7 @@ src/
 └── test/                      # Unit tests
 ```
 
-## Testing
+## 🧪 Testing
 
 The project includes comprehensive unit tests for:
 - Domain services
@@ -287,13 +612,21 @@ The project includes comprehensive unit tests for:
 - Infrastructure components
 - Presentation layer (resolvers and controllers)
 
-## Dependencies
+## 📦 Dependencies
 
 - Spring Boot WebFlux for reactive programming
 - GraphQL Java Tools for GraphQL support
 - MockK for testing
 - Reactor Test for reactive testing
 
-## Current Azure Deployment
-- docker buildx create --use
-- docker buildx build --platform linux/amd64 -t cristiantorres19/pokemon-backend:latest --push .
+---
+
+## 🚢 Azure Deployment
+
+```bash
+# Create buildx builder
+docker buildx create --use
+
+# Build and push multi-platform image
+docker buildx build --platform linux/amd64 -t cristiantorres19/pokemon-backend:latest --push .
+```

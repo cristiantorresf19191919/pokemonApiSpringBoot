@@ -61,5 +61,6 @@ type AuthPayload {
 type PokemonPreview {
   id: Int!
   name: String!
+  number: Int!
   imageUrl: String!
 }

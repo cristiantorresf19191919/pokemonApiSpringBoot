@@ -4,9 +4,11 @@ import com.pokemon.domain.model.Pokemon
 import com.pokemon.infrastructure.client.PokeApiClient
 import com.pokemon.infrastructure.mapper.PokemonDomainMapper.toDomain
 import jakarta.annotation.PostConstruct
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
+import reactor.util.retry.Retry
 
 @Service
 class PokemonCacheService(private val pokeApiClient: PokeApiClient) {
@@ -70,9 +72,45 @@ class PokemonCacheService(private val pokeApiClient: PokeApiClient) {
         return if (detailsCache.containsKey(id)) {
             Mono.just(detailsCache[id]!!)
         } else {
-            pokeApiClient.getPokemonById(id).map { it.toDomain() }.doOnNext {
-                detailsCache[id] = it
-            }
+            pokeApiClient
+                    .getPokemonById(id)
+                    .retryWhen(
+                            Retry.backoff(2, Duration.ofMillis(500)).filter { throwable ->
+                                // Retry on 5xx errors or network issues
+                                if (throwable is
+                                                org.springframework.web.reactive.function.client.WebClientResponseException
+                                ) {
+                                    val statusCode = throwable.statusCode
+                                    statusCode.is5xxServerError
+                                } else {
+                                    false
+                                }
+                            }
+                    )
+                    .map { it.toDomain() }
+                    .doOnNext { detailsCache[id] = it }
+                    .onErrorResume { error ->
+                        // Fallback: try using URL from index if available
+                        println(
+                                "Error fetching Pokemon $id by ID, trying fallback with URL: ${error.message}"
+                        )
+                        val indexItem = allPokemonIndex.firstOrNull { it.id == id }
+                        if (indexItem != null) {
+                            println("Found Pokemon $id in index, trying URL: ${indexItem.url}")
+                            pokeApiClient
+                                    .getPokemonByUrl(indexItem.url)
+                                    .map { it.toDomain() }
+                                    .doOnNext { detailsCache[id] = it }
+                                    .doOnError { fallbackError ->
+                                        println(
+                                                "Fallback also failed for Pokemon $id: ${fallbackError.message}"
+                                        )
+                                    }
+                        } else {
+                            println("Pokemon $id not found in index, cannot use fallback")
+                            Mono.error(error)
+                        }
+                    }
         }
     }
 
