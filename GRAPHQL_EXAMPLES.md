@@ -4,6 +4,15 @@ This guide contains all GraphQL queries and mutations for testing your Pokemon b
 
 **Access GraphQL Playground:** `http://localhost:8080/graphql-playground`
 
+## 🔒 Authentication Required
+
+**Important:** All Pokemon queries (`pokemon`, `pokemons`) require a valid JWT token. Only the `login` mutation is unprotected.
+
+**How to authenticate:**
+1. First, login via REST endpoint or GraphQL mutation to get a token
+2. Include token in `Authorization: Bearer <token>` header for all Pokemon queries
+3. In GraphQL Playground, you can also pass token as query parameter: `?token=YOUR_TOKEN`
+
 ---
 
 ## 🔐 Authentication Flow
@@ -299,6 +308,8 @@ query {
 ```
 
 ### 2. Get First Page (Sorted by Name)
+
+**Note:** Sorting is **global** across all ~1300 Pokemon, not just the current page. When sorting by name, "Abomasnow" appears on page 1, not just items from the API's page 1.
 
 **Query:**
 ```graphql

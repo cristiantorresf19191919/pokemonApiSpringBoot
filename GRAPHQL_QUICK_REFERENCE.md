@@ -2,6 +2,8 @@
 
 Quick copy-paste queries for GraphQL Playground.
 
+**🔒 Authentication:** All Pokemon queries require JWT token. Get token via login mutation first, then include in `Authorization: Bearer <token>` header.
+
 ---
 
 ## 🔐 Login

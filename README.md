@@ -1,6 +1,6 @@
 # Pokemon Backend
 
-A Kotlin Spring Boot backend application with WebFlux and GraphQL for managing Pokemon data.
+A Kotlin Spring Boot backend application with WebFlux and GraphQL for managing Pokemon data from PokeAPI.
 
 ## Architecture
 
@@ -24,13 +24,15 @@ This project follows Clean Architecture principles with the following layers:
 
 ## Features
 
-- **Authentication**: Simple username/password authentication (admin/admin) via REST
+- **Authentication**: JWT-based authentication (admin/admin) via REST
 - **Pokemon Operations**: All Pokemon operations via GraphQL
   - Get Pokemon by ID
   - Get paginated Pokemon list with cursor-based pagination
-  - Sort by name or number
+  - **Global sorting** by name or number (works across all Pokemon, not just current page)
 - **GraphQL API**: Full GraphQL support with schema for all Pokemon business logic
 - **REST API**: RESTful endpoint for authentication only
+- **Security**: JWT token protection for all GraphQL Pokemon queries
+- **Performance**: In-memory caching and optimized data fetching to prevent N+1 queries
 
 ## API Endpoints
 
@@ -51,7 +53,10 @@ This project follows Clean Architecture principles with the following layers:
 
 ### GraphQL Queries
 
+**Note:** All Pokemon queries require JWT authentication. See [Security](#-security-jwt-token-protection) section.
+
 ```graphql
+# Get single Pokemon (requires token)
 query {
   pokemon(id: 1) {
     id
@@ -73,6 +78,7 @@ query {
   }
 }
 
+# Get paginated list with global sorting (requires token)
 query {
   pokemons(first: 20, after: "cursor", sortBy: "name") {
     edges {
@@ -94,6 +100,7 @@ query {
   }
 }
 
+# Login (no token required)
 mutation {
   login(username: "admin", password: "admin") {
     success
@@ -102,6 +109,81 @@ mutation {
   }
 }
 ```
+
+**📚 Complete GraphQL Examples:** See [GRAPHQL_EXAMPLES.md](./GRAPHQL_EXAMPLES.md)  
+**⚡ Quick Reference:** See [GRAPHQL_QUICK_REFERENCE.md](./GRAPHQL_QUICK_REFERENCE.md)
+
+## Key Architectural Solutions
+
+### 🔐 Security: JWT Token Protection
+
+**Problem:** GraphQL endpoints need protection from unauthorized access.
+
+**Solution:** All Pokemon GraphQL queries require a valid JWT token in the `Authorization: Bearer <token>` header. The `login` mutation is the only unprotected endpoint.
+
+**Implementation:**
+- JWT tokens are generated on successful login via REST endpoint
+- `JwtAuthenticationFilter` intercepts `/graphql` requests and validates tokens
+- Invalid or missing tokens return `401 UNAUTHORIZED` with GraphQL error format
+- Token can be passed via header or query parameter (for GraphQL Playground)
+
+**Usage:**
+```bash
+# 1. Login to get token
+curl -X POST http://localhost:8080/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin"}'
+
+# 2. Use token for GraphQL queries
+curl -X POST http://localhost:8080/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"query":"query { pokemon(id: 1) { id name } }"}'
+```
+
+### ⚡ Performance: N+1 Problem Solution
+
+**Problem:** Fetching a page of 20 Pokemon required 21 HTTP requests (1 for list + 20 for details), causing slow performance.
+
+**Solution:** In-memory indexing with smart caching strategy.
+
+**Implementation:**
+- `PokemonCacheService` loads all Pokemon IDs and names on startup (lightweight index)
+- When fetching a page, we first get the slice from in-memory index (instant)
+- Then fetch details only for the 20 items on that page (parallel requests)
+- Previously fetched Pokemon are cached in `ConcurrentHashMap` for instant subsequent access
+
+**Result:** 
+- First page load: 20 API calls (only for current page)
+- Subsequent page loads: 0-20 calls (cached items return instantly)
+- Sorting/pagination: 0ms (in-memory operations)
+
+### 🎯 Global Sorting Fix
+
+**Problem:** Sorting only worked within the current page. "Sort by Name" would sort Bulbasaur, Ivysaur, etc., but wouldn't bring "Abra" to page 1 (since Abra is on page 3 of the API's ID-based list).
+
+**Solution:** In-memory global sorting before pagination.
+
+**Implementation:**
+- All ~1300 Pokemon are indexed in memory on startup
+- When sorting is requested, the entire list is sorted globally
+- Pagination happens after sorting, ensuring correct results
+- Example: "Sort by Name" now shows "Abomasnow" on page 1, not just items from API page 1
+
+**Result:** True global sorting that works across all Pokemon, not just the current page.
+
+### 💾 Caching Strategy
+
+**Two-Level Caching:**
+
+1. **Index Cache (Startup):** Lightweight list of all Pokemon (ID, name, URL) loaded once
+2. **Details Cache (Runtime):** `ConcurrentHashMap` storing full Pokemon details after first fetch
+
+**Benefits:**
+- Sorting and pagination are instant (in-memory operations)
+- Previously viewed Pokemon load instantly from cache
+- Reduces external API calls significantly
+- Thread-safe with `ConcurrentHashMap`
 
 ## Cursor-Based Pagination
 
