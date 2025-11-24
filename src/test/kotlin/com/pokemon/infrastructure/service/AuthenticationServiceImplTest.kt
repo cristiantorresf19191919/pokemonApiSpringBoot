@@ -1,11 +1,15 @@
 package com.pokemon.infrastructure.service
 
+import com.pokemon.domain.service.JwtTokenService
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class AuthenticationServiceImplTest {
 
-    private val authenticationService = AuthenticationServiceImpl()
+    private val jwtTokenService = mockk<JwtTokenService>()
+    private val authenticationService = AuthenticationServiceImpl(jwtTokenService)
 
     @Test
     fun `should authenticate with correct credentials`() {
@@ -30,5 +34,12 @@ class AuthenticationServiceImplTest {
         val result = authenticationService.authenticate("user", "pass")
         assertFalse(result)
     }
-}
 
+    @Test
+    fun `should generate token`() {
+        every { jwtTokenService.generateToken("admin") } returns "test-token"
+
+        val token = authenticationService.generateToken("admin")
+        assertEquals("test-token", token)
+    }
+}

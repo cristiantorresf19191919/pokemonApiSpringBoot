@@ -14,11 +14,13 @@ class AuthMutationResolverTest {
     @Test
     fun `should return success for valid credentials`() {
         every { authenticationService.authenticate("admin", "admin") } returns true
+        every { authenticationService.generateToken("admin") } returns "test-token"
 
         val result = resolver.login("admin", "admin")
 
         assertTrue(result.success)
         assertNotNull(result.token)
+        assertEquals("test-token", result.token)
         assertEquals("Login successful", result.message)
     }
 
@@ -33,4 +35,3 @@ class AuthMutationResolverTest {
         assertEquals("Invalid credentials", result.message)
     }
 }
-

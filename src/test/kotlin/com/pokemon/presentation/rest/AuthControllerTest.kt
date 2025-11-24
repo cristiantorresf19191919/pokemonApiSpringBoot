@@ -15,6 +15,7 @@ class AuthControllerTest {
     @Test
     fun `should return success for valid credentials`() {
         every { authenticationService.authenticate("admin", "admin") } returns true
+        every { authenticationService.generateToken("admin") } returns "test-token"
 
         val request = LoginRequest("admin", "admin")
         val response = controller.login(request)
@@ -22,6 +23,7 @@ class AuthControllerTest {
         assertEquals(HttpStatus.OK, response.statusCode)
         assertTrue(response.body?.success == true)
         assertNotNull(response.body?.token)
+        assertEquals("test-token", response.body?.token)
     }
 
     @Test
@@ -36,4 +38,3 @@ class AuthControllerTest {
         assertNull(response.body?.token)
     }
 }
-
