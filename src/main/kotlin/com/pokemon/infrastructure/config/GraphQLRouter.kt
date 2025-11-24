@@ -235,32 +235,6 @@ class GraphQLRouter(
                                 throw new Error('GraphiQL library not loaded correctly.');
                             }
                             
-                            // Create a simple fetcher function (no authentication needed)
-                            const fetcher = async (graphQLParams) => {
-                                try {
-                                    const response = await fetch('/graphql', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify(graphQLParams)
-                                    });
-                                    
-                                    if (!response.ok) {
-                                        throw new Error('HTTP error! status: ' + response.status);
-                                    }
-                                    
-                                    return await response.json();
-                                } catch (error) {
-                                    return {
-                                        data: null,
-                                        errors: [{
-                                            message: error.message || 'An error occurred while executing the query'
-                                        }]
-                                    };
-                                }
-                            };
-                            
                             // Find GraphiQL component
                             let GraphiQLComponent = null;
                             if (GraphiQL.GraphiQL) {
@@ -273,16 +247,8 @@ class GraphQLRouter(
                                 throw new Error('Could not find GraphiQL component. Available keys: ' + Object.keys(GraphiQL).join(', '));
                             }
                             
-                            // Default query
-                            const defaultQuery = '# Welcome to Pokemon GraphQL API\\n#\\n# Headers Example (click Headers tab):\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery {\\n  # Start typing to see available queries\\n}';
-                            
-                            // Default headers with token example
-                            const defaultHeaders = {
-                                'Authorization': 'Bearer paste_your_token_here'
-                            };
-                            
-                            // Create fetcher with header support
-                            const fetcherWithHeaders = async (graphQLParams, opts) => {
+                            // Create a custom fetcher that properly handles introspection
+                            const fetcher = async (graphQLParams, opts) => {
                                 let requestHeaders = {
                                     'Content-Type': 'application/json'
                                 };
@@ -303,27 +269,46 @@ class GraphQLRouter(
                                         body: JSON.stringify(graphQLParams)
                                     });
                                     
+                                    // Check response status first
                                     if (!response.ok) {
-                                        throw new Error('HTTP error! status: ' + response.status);
+                                        const errorText = await response.text();
+                                        let errorData;
+                                        try {
+                                            errorData = JSON.parse(errorText);
+                                        } catch (e) {
+                                            errorData = { errors: [{ message: 'HTTP ' + response.status + ': ' + errorText }] };
+                                        }
+                                        // Return error in GraphQL format
+                                        if (errorData.errors) {
+                                            return errorData;
+                                        }
+                                        return { errors: [{ message: errorData.message || 'Request failed' }] };
                                     }
                                     
-                                    return await response.json();
+                                    // Parse JSON response
+                                    const result = await response.json();
+                                    
+                                    // Return the result (GraphiQL will handle errors in the result.errors array)
+                                    return result || { data: null };
                                 } catch (error) {
+                                    // Network or parsing errors
+                                    console.error('GraphQL fetch error:', error);
                                     return {
-                                        data: null,
                                         errors: [{
-                                            message: error.message || 'An error occurred while executing the query'
+                                            message: error.message || 'Network error: Failed to connect to /graphql'
                                         }]
                                     };
                                 }
                             };
                             
+                            // Default query
+                            const defaultQuery = '# Welcome to Pokemon GraphQL API\\n#\\n# Headers Example (click Headers tab):\\n# {\\n#   "Authorization": "Bearer paste_your_token_here"\\n# }\\n\\nquery {\\n  # Start typing to see available queries\\n}';
+                            
                             // Simple GraphiQL component
                             const root = ReactDOM.createRoot(graphiqlElement);
                             root.render(React.createElement(GraphiQLComponent, {
-                                fetcher: fetcherWithHeaders,
-                                defaultQuery: defaultQuery,
-                                defaultHeaders: defaultHeaders
+                                fetcher: fetcher,
+                                defaultQuery: defaultQuery
                             }));
                         }
                     </script>
