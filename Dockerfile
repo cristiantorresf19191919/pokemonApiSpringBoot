@@ -12,20 +12,17 @@ COPY gradlew build.gradle.kts settings.gradle.kts ./
 COPY src/ src/
 
 # Make gradlew executable and build the application
-RUN chmod +x gradlew && ./gradlew bootJar --no-daemon
+# --no-daemon: Ensures Gradle shuts down after building (saves memory/stuck processes)
+RUN chmod +x gradlew && ./gradlew build --no-daemon && rm build/libs/*-plain.jar
 
 # Stage 2: Runtime image
 FROM eclipse-temurin:21-jre-alpine
 
-# Set the working directory inside the container
 WORKDIR /app
 
 # Copy the JAR file from the build stage to the container
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Expose the port your application runs on
 EXPOSE 8080
 
-# Define the command to run your application
 ENTRYPOINT ["java", "-jar", "app.jar"]
-

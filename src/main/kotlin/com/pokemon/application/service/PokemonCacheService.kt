@@ -77,6 +77,16 @@ class PokemonCacheService(
     private fun extractIdFromUrl(url: String): Int {
         return url.trimEnd('/').substringAfterLast('/').toInt()
     }
+
+    fun search(query: String): List<PokemonIndexItem> {
+        if (allPokemonIndex.isEmpty()) return emptyList()
+        
+        val sanitizedQuery = query.trim().lowercase()
+        if (sanitizedQuery.isEmpty()) return emptyList()
+        return allPokemonIndex
+            .filter { it.name.contains(sanitizedQuery) }
+            .take(10) // Limit to 10 results
+    }
 }
 
 data class PokemonIndexItem(val id: Int, val name: String, val url: String)

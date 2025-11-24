@@ -2,6 +2,7 @@ package com.pokemon.presentation.graphql.resolver
 
 import graphql.kickstart.tools.GraphQLQueryResolver
 import com.pokemon.application.dto.PokemonDTO
+import com.pokemon.application.dto.PokemonPreviewDTO
 import com.pokemon.application.service.PokemonService
 import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
@@ -18,6 +19,12 @@ class PokemonQueryResolver(
 
     fun pokemons(first: Int?, after: String?, sortBy: String?): CompletableFuture<com.pokemon.application.dto.PageDTO<PokemonDTO>> {
         return pokemonService.getPokemons(first, after, sortBy)
+            .toFuture()
+    }
+
+    fun searchPokemon(query: String): CompletableFuture<List<PokemonPreviewDTO>> {
+        return pokemonService.searchPokemon(query)
+            .collectList()
             .toFuture()
     }
 }

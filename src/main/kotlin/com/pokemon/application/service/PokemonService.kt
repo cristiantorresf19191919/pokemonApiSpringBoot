@@ -2,6 +2,7 @@ package com.pokemon.application.service
 
 import com.pokemon.application.dto.PageDTO
 import com.pokemon.application.dto.PokemonDTO
+import com.pokemon.application.dto.PokemonPreviewDTO
 import com.pokemon.application.mapper.PokemonMapper
 import com.pokemon.domain.model.Page
 import com.pokemon.domain.model.Pokemon
@@ -75,5 +76,18 @@ class PokemonService(
 
                                 PokemonMapper.toDTO(page)
                         }
+        }
+
+        fun searchPokemon(query: String): Flux<PokemonPreviewDTO> {
+                // 1. Get raw index items from memory
+                val results = pokemonCacheService.search(query)
+                // 2. Map to DTO and compute Image URL statically (No API call)
+                return Flux.fromIterable(results).map { item ->
+                        PokemonPreviewDTO(
+                                id = item.id,
+                                name = item.name,
+                                imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png"
+                        )
+                }
         }
 }

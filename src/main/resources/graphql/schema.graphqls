@@ -1,6 +1,8 @@
 type Query {
     pokemon(id: Int!): Pokemon
     pokemons(first: Int, after: String, sortBy: String): PokemonConnection!
+    # Autocomplete: Fast, lightweight search
+    searchPokemon(query: String!): [PokemonPreview!]!
 }
 
 type Mutation {
@@ -54,5 +56,11 @@ type AuthPayload {
     success: Boolean!
     token: String
     message: String
+}
+
+type PokemonPreview {
+    id: Int!
+    name: String!
+    imageUrl: String!
 }
 
